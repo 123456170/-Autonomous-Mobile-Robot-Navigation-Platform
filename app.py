@@ -31,12 +31,6 @@ MODE_LABELS = {
     "dead": "Dead reckoning",
 }
 
-SCENARIO_LABELS = {
-    "warehouse": "Warehouse",
-    "corridor": "Corridor",
-    "dynamic": "Dynamic Warehouse",
-}
-
 
 def clamp(value: float, low: float, high: float) -> float:
     return max(low, min(high, value))
@@ -171,7 +165,6 @@ class World:
         self.grid = np.zeros((self.rows, self.cols), dtype=np.uint8)
         self._perimeter()
 
-        # Shelf blocks creating corridors.
         for c in [15, 35, 55]:
             self._add_rect_cells(c - 1, 8, c + 1, 22)
             self._add_rect_cells(c - 1, 28, c + 1, 42)
@@ -186,34 +179,13 @@ class World:
         self.goal_order = ["Pick A", "Pack B", "Charge"]
 
         self.dynamic = [
-            DynamicObstacle(
-                "Forklift Alpha",
-                1.5,
-                2.5,
-                0.30,
-                [(1.2, 2.5), (5.0, 2.5)],
-                0.42,
-            ),
-            DynamicObstacle(
-                "Forklift Beta",
-                6.0,
-                0.72,
-                0.26,
-                [(6.2, 0.72), (1.2, 0.72)],
-                0.34,
-            ),
+            DynamicObstacle("Forklift Alpha", 1.5, 2.5, 0.30, [(1.2, 2.5), (5.0, 2.5)], 0.42),
+            DynamicObstacle("Forklift Beta", 6.0, 0.72, 0.26, [(6.2, 0.72), (1.2, 0.72)], 0.34),
         ]
 
         self.blockers = [
-            {
-                "name": "Temporary pallet",
-                "x": 6.2,
-                "y": 2.5,
-                "radius": 0.42,
-                "start": 5.0,
-                "end": 12.5,
-                "active": False,
-            }
+            {"name": "Temporary pallet", "x": 6.2, "y": 2.5, "radius": 0.42,
+             "start": 5.0, "end": 12.5, "active": False}
         ]
 
     def _build_corridor(self) -> None:
@@ -222,7 +194,6 @@ class World:
         self.grid = np.zeros((self.rows, self.cols), dtype=np.uint8)
         self._perimeter()
 
-        # Long indoor corridor with partial pillars.
         self._add_rect_cells(1, 1, 88, 11)
         self._add_rect_cells(1, 21, 88, 30)
 
@@ -241,69 +212,28 @@ class World:
         self.goal_order = ["Bay 1", "Bay 2", "Return"]
 
         self.dynamic = [
-            DynamicObstacle(
-                "Shuttle",
-                2.0,
-                1.60,
-                0.26,
-                [(2.0, 1.60), (8.5, 1.60)],
-                0.45,
-            )
+            DynamicObstacle("Shuttle", 2.0, 1.60, 0.26, [(2.0, 1.60), (8.5, 1.60)], 0.45)
         ]
 
         self.blockers = [
-            {
-                "name": "Door pallet",
-                "x": 5.0,
-                "y": 1.60,
-                "radius": 0.40,
-                "start": 4.0,
-                "end": 11.0,
-                "active": False,
-            }
+            {"name": "Door pallet", "x": 5.0, "y": 1.60, "radius": 0.40,
+             "start": 4.0, "end": 11.0, "active": False}
         ]
 
     def _build_dynamic_warehouse(self) -> None:
         self._build_warehouse()
 
         self.dynamic.extend([
-            DynamicObstacle(
-                "Cart Gamma",
-                2.5,
-                4.45,
-                0.24,
-                [(2.5, 4.45), (6.0, 4.45)],
-                0.38,
-            ),
-            DynamicObstacle(
-                "Maintenance robot",
-                4.5,
-                0.72,
-                0.22,
-                [(4.5, 0.72), (1.5, 0.72), (1.5, 2.5), (4.5, 2.5)],
-                0.32,
-            ),
+            DynamicObstacle("Cart Gamma", 2.5, 4.45, 0.24, [(2.5, 4.45), (6.0, 4.45)], 0.38),
+            DynamicObstacle("Maintenance robot", 4.5, 0.72, 0.22,
+                            [(4.5, 0.72), (1.5, 0.72), (1.5, 2.5), (4.5, 2.5)], 0.32),
         ])
 
         self.blockers.extend([
-            {
-                "name": "Falling box",
-                "x": 5.0,
-                "y": 1.15,
-                "radius": 0.38,
-                "start": 3.0,
-                "end": 9.0,
-                "active": False,
-            },
-            {
-                "name": "Cone zone",
-                "x": 2.0,
-                "y": 4.45,
-                "radius": 0.34,
-                "start": 10.0,
-                "end": 18.0,
-                "active": False,
-            },
+            {"name": "Falling box", "x": 5.0, "y": 1.15, "radius": 0.38,
+             "start": 3.0, "end": 9.0, "active": False},
+            {"name": "Cone zone", "x": 2.0, "y": 4.45, "radius": 0.34,
+             "start": 10.0, "end": 18.0, "active": False},
         ])
 
     def _ensure_free_start(self) -> None:
@@ -346,24 +276,14 @@ class World:
         for d in self.dynamic:
             if d.active:
                 out.append({
-                    "x": d.x,
-                    "y": d.y,
-                    "radius": d.radius,
-                    "vx": d.vx,
-                    "vy": d.vy,
-                    "name": d.name,
-                    "kind": "dynamic",
+                    "x": d.x, "y": d.y, "radius": d.radius,
+                    "vx": d.vx, "vy": d.vy, "name": d.name, "kind": "dynamic",
                 })
         for b in self.blockers:
             if b.get("active", False):
                 out.append({
-                    "x": b["x"],
-                    "y": b["y"],
-                    "radius": b["radius"],
-                    "vx": 0.0,
-                    "vy": 0.0,
-                    "name": b["name"],
-                    "kind": "blocker",
+                    "x": b["x"], "y": b["y"], "radius": b["radius"],
+                    "vx": 0.0, "vy": 0.0, "name": b["name"], "kind": "blocker",
                 })
         return out
 
@@ -405,13 +325,8 @@ class World:
                 return True
         return False
 
-    def _raycast_with_active(
-        self,
-        pose: Pose,
-        angle: float,
-        max_range: float,
-        active: List[Dict[str, Any]],
-    ) -> float:
+    def _raycast_with_active(self, pose: Pose, angle: float, max_range: float,
+                             active: List[Dict[str, Any]]) -> float:
         step = self.res * 0.45
         x = pose.x
         y = pose.y
@@ -434,14 +349,8 @@ class World:
 
         return max_range
 
-    def scan(
-        self,
-        pose: Pose,
-        n_rays: int = 60,
-        max_range: float = 5.0,
-        noise: float = 0.03,
-        drop_prob: float = 0.02,
-    ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+    def scan(self, pose: Pose, n_rays: int = 60, max_range: float = 5.0,
+             noise: float = 0.03, drop_prob: float = 0.02):
         active = self.active_obstacles()
         angles = pose.theta + np.linspace(-math.pi, math.pi, n_rays, endpoint=False)
         ranges = np.empty(n_rays, dtype=np.float32)
@@ -458,12 +367,7 @@ class World:
 
         return ranges, angles, valid
 
-    def camera_detections(
-        self,
-        pose: Pose,
-        max_range: float = 4.0,
-        n_beams: int = 9,
-    ) -> List[Dict[str, Any]]:
+    def camera_detections(self, pose: Pose, max_range: float = 4.0, n_beams: int = 9):
         active = self.active_obstacles()
         bearings = np.linspace(-0.55, 0.55, n_beams)
         dets: List[Dict[str, Any]] = []
@@ -500,13 +404,8 @@ class World:
 # ----------------------------------------------------------------------
 
 class OccupancyGrid:
-    def __init__(
-        self,
-        rows: int,
-        cols: int,
-        res: float,
-        known_grid: Optional[np.ndarray] = None,
-    ):
+    def __init__(self, rows: int, cols: int, res: float,
+                 known_grid: Optional[np.ndarray] = None):
         self.rows = rows
         self.cols = cols
         self.res = res
@@ -544,14 +443,8 @@ class OccupancyGrid:
         self.explored[r, c] = True
         self.dirty = True
 
-    def update(
-        self,
-        pose: Pose,
-        ranges: np.ndarray,
-        angles: np.ndarray,
-        valid: np.ndarray,
-        max_range: float,
-    ) -> None:
+    def update(self, pose: Pose, ranges: np.ndarray, angles: np.ndarray,
+               valid: np.ndarray, max_range: float) -> None:
         self._mark(pose.x, pose.y, False)
         step = self.res * 0.8
 
@@ -567,35 +460,23 @@ class OccupancyGrid:
             if r < max_range * 0.95:
                 d = 0.18
                 while d < r - 0.12 and d < max_range:
-                    x = pose.x + ca * d
-                    y = pose.y + sa * d
-                    self._mark(x, y, False)
+                    self._mark(pose.x + ca * d, pose.y + sa * d, False)
                     d += step
-
-                x = pose.x + ca * r
-                y = pose.y + sa * r
-                self._mark(x, y, True)
+                self._mark(pose.x + ca * r, pose.y + sa * r, True)
             else:
                 d = 0.18
                 while d < max_range:
-                    x = pose.x + ca * d
-                    y = pose.y + sa * d
-                    self._mark(x, y, False)
+                    self._mark(pose.x + ca * d, pose.y + sa * d, False)
                     d += step
 
 
 # ----------------------------------------------------------------------
-# Particle filter localization / mapping support
+# Particle filter localization
 # ----------------------------------------------------------------------
 
 class ParticleFilter:
-    def __init__(
-        self,
-        n_particles: int,
-        initial_pose: Pose,
-        spread: float,
-        rng: np.random.Generator,
-    ):
+    def __init__(self, n_particles: int, initial_pose: Pose, spread: float,
+                 rng: np.random.Generator):
         self.n = int(n_particles)
         self.rng = rng
         self.spread = spread
@@ -620,30 +501,14 @@ class ParticleFilter:
             self.particles[i, 1] += ds * math.sin(th) + float(self.rng.normal(0.0, noise_xy))
             self.particles[i, 2] = wrap_pi(th + dth + float(self.rng.normal(0.0, noise_th)))
 
-    def _prob_at(
-        self,
-        x: float,
-        y: float,
-        map_prob: np.ndarray,
-        res: float,
-        rows: int,
-        cols: int,
-    ) -> float:
+    def _prob_at(self, x, y, map_prob, res, rows, cols) -> float:
         c = int(math.floor(x / res))
         r = int(math.floor(y / res))
         if r < 0 or c < 0 or r >= rows or c >= cols:
             return 0.95
         return float(map_prob[r, c])
 
-    def sensor_update(
-        self,
-        ranges: np.ndarray,
-        angles: np.ndarray,
-        valid: np.ndarray,
-        map_prob: np.ndarray,
-        res: float,
-        max_range: float,
-    ) -> None:
+    def sensor_update(self, ranges, angles, valid, map_prob, res, max_range) -> None:
         n_rays = len(ranges)
         if n_rays == 0:
             return
@@ -672,20 +537,13 @@ class ParticleFilter:
 
                 if r < max_range * 0.95:
                     for frac in (0.25, 0.55, 0.85):
-                        x = px + ca * r * frac
-                        y = py + sa * r * frac
-                        p = self._prob_at(x, y, map_prob, res, rows, cols)
+                        p = self._prob_at(px + ca * r * frac, py + sa * r * frac, map_prob, res, rows, cols)
                         ray_ll += math.log(max(1.0 - p, 0.08))
-
-                    x = px + ca * r
-                    y = py + sa * r
-                    p = self._prob_at(x, y, map_prob, res, rows, cols)
+                    p = self._prob_at(px + ca * r, py + sa * r, map_prob, res, rows, cols)
                     ray_ll += math.log(max(p, 0.08))
                 else:
                     for frac in (0.2, 0.4, 0.6, 0.8, 1.0):
-                        x = px + ca * r * frac
-                        y = py + sa * r * frac
-                        p = self._prob_at(x, y, map_prob, res, rows, cols)
+                        p = self._prob_at(px + ca * r * frac, py + sa * r * frac, map_prob, res, rows, cols)
                         ray_ll += math.log(max(1.0 - p, 0.08))
 
                 ll += max(ray_ll, -5.0)
@@ -724,10 +582,7 @@ class ParticleFilter:
 
         cos_sum = float(np.sum(w * np.cos(self.particles[:, 2])))
         sin_sum = float(np.sum(w * np.sin(self.particles[:, 2])))
-        if math.hypot(cos_sum, sin_sum) < 1e-9:
-            theta = float(self.particles[0, 2])
-        else:
-            theta = math.atan2(sin_sum, cos_sum)
+        theta = float(self.particles[0, 2]) if math.hypot(cos_sum, sin_sum) < 1e-9 else math.atan2(sin_sum, cos_sum)
         theta = wrap_pi(theta)
 
         var_x = float(np.sum(w * (self.particles[:, 0] - x) ** 2))
@@ -793,15 +648,8 @@ class Robot:
 # Costmap, global planner, local planner
 # ----------------------------------------------------------------------
 
-def build_costmap(
-    world: World,
-    occ_prob: np.ndarray,
-    obstacles: List[Dict[str, Any]],
-    safety_margin: float,
-    robot_radius: float,
-    mode: str,
-    explored: Optional[np.ndarray] = None,
-) -> Tuple[np.ndarray, np.ndarray]:
+def build_costmap(world, occ_prob, obstacles, safety_margin, robot_radius, mode,
+                  explored=None) -> Tuple[np.ndarray, np.ndarray]:
     if mode == "slam":
         if explored is None:
             explored = np.ones_like(occ_prob, dtype=bool)
@@ -830,11 +678,10 @@ def build_costmap(
     return blocked, dist.astype(np.float32)
 
 
-def nearest_free_cell(blocked: np.ndarray, rc: Tuple[int, int], max_rad: int = 12) -> Optional[Tuple[int, int]]:
+def nearest_free_cell(blocked, rc, max_rad=12):
     rows, cols = blocked.shape
-    r0, c0 = rc
-    r0 = clamp(r0, 0, rows - 1)
-    c0 = clamp(c0, 0, cols - 1)
+    r0 = clamp(rc[0], 0, rows - 1)
+    c0 = clamp(rc[1], 0, cols - 1)
 
     if not blocked[r0, c0]:
         return r0, c0
@@ -851,25 +698,21 @@ def nearest_free_cell(blocked: np.ndarray, rc: Tuple[int, int], max_rad: int = 1
     return None
 
 
-def astar(blocked: np.ndarray, start: Tuple[int, int], goal: Tuple[int, int]) -> Optional[List[Tuple[int, int]]]:
+def astar(blocked, start, goal):
     rows, cols = blocked.shape
     if start == goal:
         return [start]
 
-    neighbors = [
-        (-1, 0), (1, 0), (0, -1), (0, 1),
-        (-1, -1), (-1, 1), (1, -1), (1, 1),
-    ]
+    neighbors = [(-1, 0), (1, 0), (0, -1), (0, 1), (-1, -1), (-1, 1), (1, -1), (1, 1)]
 
-    def heuristic(rc: Tuple[int, int]) -> float:
+    def heuristic(rc):
         return math.hypot(rc[0] - goal[0], rc[1] - goal[1])
 
     g = np.full((rows, cols), np.inf, dtype=np.float32)
     g[start] = 0.0
     parent: Dict[Tuple[int, int], Tuple[int, int]] = {}
 
-    open_heap: List[Tuple[float, float, Tuple[int, int]]] = []
-    heapq.heappush(open_heap, (heuristic(start), 0.0, start))
+    open_heap = [(heuristic(start), 0.0, start)]
 
     while open_heap:
         _, gc, cur = heapq.heappop(open_heap)
@@ -891,8 +734,7 @@ def astar(blocked: np.ndarray, start: Tuple[int, int], goal: Tuple[int, int]) ->
             if blocked[nr, nc]:
                 continue
 
-            step_cost = math.hypot(dr, dc)
-            ng = gc + step_cost
+            ng = gc + math.hypot(dr, dc)
             if ng < g[nr, nc]:
                 g[nr, nc] = ng
                 parent[(nr, nc)] = cur
@@ -901,17 +743,9 @@ def astar(blocked: np.ndarray, start: Tuple[int, int], goal: Tuple[int, int]) ->
     return None
 
 
-def plan_global(
-    blocked: np.ndarray,
-    world: World,
-    start: Pose,
-    goal: Pose,
-) -> Optional[List[Pose]]:
-    start_rc = world.world_to_cell(start.x, start.y)
-    goal_rc = world.world_to_cell(goal.x, goal.y)
-
-    start_rc = nearest_free_cell(blocked, start_rc)
-    goal_rc = nearest_free_cell(blocked, goal_rc)
+def plan_global(blocked, world, start: Pose, goal: Pose):
+    start_rc = nearest_free_cell(blocked, world.world_to_cell(start.x, start.y))
+    goal_rc = nearest_free_cell(blocked, world.world_to_cell(goal.x, goal.y))
 
     if start_rc is None or goal_rc is None:
         return None
@@ -920,11 +754,7 @@ def plan_global(
     if cells is None:
         return None
 
-    path: List[Pose] = []
-    for r, c in cells:
-        x, y = world.cell_to_world(r, c)
-        path.append(Pose(x, y, 0.0))
-    return path
+    return [Pose(*world.cell_to_world(r, c), 0.0) for r, c in cells]
 
 
 class LocalPlanner:
@@ -935,30 +765,16 @@ class LocalPlanner:
         self.w_bins = 7
         self.horizon_time = 1.0
 
-    def _select_target(self, pose: Pose, path: List[Pose], goal: Goal) -> Tuple[Pose, bool]:
+    def _select_target(self, pose, path, goal):
         if not path:
             return goal.pose, True
 
-        target = path[0]
-        final = False
         for p in path:
             if dist2d(pose.x, pose.y, p.x, p.y) > 0.40:
-                target = p
-                final = False
-                break
-        else:
-            target = path[-1]
-            final = True
+                return p, False
+        return path[-1], True
 
-        return target, final
-
-    def _static_clearance(
-        self,
-        pose: Pose,
-        blocked: np.ndarray,
-        dist_transform: np.ndarray,
-        res: float,
-    ) -> float:
+    def _static_clearance(self, pose, blocked, dist_transform, res):
         c = int(math.floor(pose.x / res))
         r = int(math.floor(pose.y / res))
         rows, cols = blocked.shape
@@ -968,38 +784,18 @@ class LocalPlanner:
             return 0.0
         return float(dist_transform[r, c])
 
-    def _dynamic_clearance(
-        self,
-        pose: Pose,
-        obstacles: List[Dict[str, Any]],
-        tau: float,
-        robot_radius: float,
-    ) -> float:
+    def _dynamic_clearance(self, pose, obstacles, tau, robot_radius):
         if not obstacles:
             return 10.0
-
         min_clear = 10.0
         for obs in obstacles:
             ox = obs["x"] + obs.get("vx", 0.0) * tau
             oy = obs["y"] + obs.get("vy", 0.0) * tau
-            clear = dist2d(pose.x, pose.y, ox, oy) - obs["radius"] - robot_radius
-            min_clear = min(min_clear, clear)
+            min_clear = min(min_clear, dist2d(pose.x, pose.y, ox, oy) - obs["radius"] - robot_radius)
         return min_clear
 
-    def compute(
-        self,
-        pose: Pose,
-        goal: Goal,
-        path: List[Pose],
-        blocked: np.ndarray,
-        dist_transform: np.ndarray,
-        obstacles: List[Dict[str, Any]],
-        robot_twist: Twist,
-        world_res: float,
-        robot_radius: float,
-        safety_margin: float,
-        dt: float,
-    ) -> Tuple[Twist, bool]:
+    def compute(self, pose, goal, path, blocked, dist_transform, obstacles,
+                robot_twist, world_res, robot_radius, safety_margin, dt):
         target, final = self._select_target(pose, path, goal)
 
         if final and dist2d(pose.x, pose.y, goal.pose.x, goal.pose.y) < 0.55:
@@ -1044,14 +840,9 @@ class LocalPlanner:
                 heading_err = abs(wrap_pi(target_theta - p.theta))
                 dist_err = dist2d(target.x, target.y, p.x, p.y)
 
-                cost = (
-                    1.0 * dist_err
-                    + 1.2 * heading_err
-                    + 0.15 * abs(v - self.max_v * 0.75)
-                    + 0.35 * abs(w)
-                    - 1.5 * min(min_static, 1.0)
-                    - 1.0 * min(min_dyn, 1.0)
-                )
+                cost = (1.0 * dist_err + 1.2 * heading_err
+                        + 0.15 * abs(v - self.max_v * 0.75) + 0.35 * abs(w)
+                        - 1.5 * min(min_static, 1.0) - 1.0 * min(min_dyn, 1.0))
 
                 if cost < best_cost:
                     best_cost = cost
@@ -1061,7 +852,6 @@ class LocalPlanner:
         if found:
             return best_cmd, True
 
-        # Fallback: in-place rotation if geometrically safe.
         best_rot_cost = float("inf")
         best_rot_w = 0.0
         found_rot = False
@@ -1071,8 +861,7 @@ class LocalPlanner:
 
         if sd0 > 0.0 and dd0 > safety_margin * 0.25:
             for w in w_samples:
-                heading_err = abs(wrap_pi(target_theta - pose.theta))
-                cost = heading_err + 0.2 * abs(w)
+                cost = abs(wrap_pi(target_theta - pose.theta)) + 0.2 * abs(w)
                 if cost < best_rot_cost:
                     best_rot_cost = cost
                     best_rot_w = float(w)
@@ -1122,27 +911,17 @@ class Navigator:
         if self.state in ("IDLE", "ALL_GOALS_COMPLETE"):
             self.state = "PLANNING"
 
-    def _path_blocked(self, pose: Pose, blocked: np.ndarray, world: World) -> bool:
+    def _path_blocked(self, pose, blocked, world) -> bool:
         if not self.path:
             return True
-
         for p in self.path[:6]:
             r, c = world.world_to_cell(p.x, p.y)
             if blocked[r, c]:
                 return True
         return False
 
-    def compute(
-        self,
-        est_pose: Pose,
-        blocked: np.ndarray,
-        dist_transform: np.ndarray,
-        world: World,
-        obstacles: List[Dict[str, Any]],
-        robot_twist: Twist,
-        sensor_stats: Dict[str, Any],
-        dt: float,
-    ) -> Twist:
+    def compute(self, est_pose, blocked, dist_transform, world, obstacles,
+                robot_twist, sensor_stats, dt) -> Twist:
         self.time += dt
 
         if self.current_goal is None:
@@ -1155,7 +934,6 @@ class Navigator:
             self.replan_timer = 0.0
             self.state = "PLANNING"
 
-        # Safety monitor: stop if localization or perception is unreliable.
         unreliable = (
             sensor_stats["ess_frac"] < self.params["min_ess"]
             or sensor_stats["cov_trace"] > self.params["max_cov"]
@@ -1172,10 +950,7 @@ class Navigator:
         dgoal = dist2d(est_pose.x, est_pose.y, goal_pose.x, goal_pose.y)
 
         if dgoal < self.params["xy_tolerance"]:
-            self.completed.append({
-                "name": self.current_goal.name,
-                "time": self.time,
-            })
+            self.completed.append({"name": self.current_goal.name, "time": self.time})
             self.current_goal = None
             self.path = []
             self.state = "GOAL_REACHED"
@@ -1189,7 +964,8 @@ class Navigator:
                 self.recoveries += 1
                 self.replan_timer = 1.0
                 target_theta = math.atan2(goal_pose.y - est_pose.y, goal_pose.x - est_pose.x)
-                w = clamp(wrap_pi(target_theta - est_pose.theta), -self.params["max_vel"] * 1.8, self.params["max_vel"] * 1.8)
+                w = clamp(wrap_pi(target_theta - est_pose.theta),
+                          -self.params["max_vel"] * 1.8, self.params["max_vel"] * 1.8)
                 return Twist(0.0, w)
 
             self.path = path
@@ -1197,17 +973,9 @@ class Navigator:
             self.state = "FOLLOWING"
 
         cmd, safe = self.local.compute(
-            est_pose,
-            self.current_goal,
-            self.path,
-            blocked,
-            dist_transform,
-            obstacles,
-            robot_twist,
-            world.res,
-            self.params["robot_radius"],
-            self.params["safety_margin"],
-            dt,
+            est_pose, self.current_goal, self.path, blocked, dist_transform,
+            obstacles, robot_twist, world.res, self.params["robot_radius"],
+            self.params["safety_margin"], dt,
         )
 
         if not safe:
@@ -1217,12 +985,11 @@ class Navigator:
                 self.stuck = 0
                 self.replan_timer = 0.0
                 self.state = "RECOVERY"
-
                 target = self.path[0] if self.path else goal_pose
                 target_theta = math.atan2(target.y - est_pose.y, target.x - est_pose.x)
-                w = clamp(wrap_pi(target_theta - est_pose.theta), -self.params["max_vel"] * 1.8, self.params["max_vel"] * 1.8)
+                w = clamp(wrap_pi(target_theta - est_pose.theta),
+                          -self.params["max_vel"] * 1.8, self.params["max_vel"] * 1.8)
                 return Twist(0.0, w)
-
             return Twist(0.0, 0.0)
 
         self.stuck = 0
@@ -1233,7 +1000,7 @@ class Navigator:
 
 
 # ----------------------------------------------------------------------
-# Integrated simulation / ROS 2-inspired node orchestration
+# Integrated simulation
 # ----------------------------------------------------------------------
 
 class NavigationSim:
@@ -1270,30 +1037,22 @@ class NavigationSim:
 
         self.occ_prob = self.world.static_map_prob if self.mode != "slam" else self.occ.probability()
         self.latest_blocked, self.latest_dist = build_costmap(
-            self.world,
-            self.occ_prob,
-            self.perceived_obs,
-            self.params["safety_margin"],
-            self.robot.radius,
-            self.mode,
+            self.world, self.occ_prob, self.perceived_obs,
+            self.params["safety_margin"], self.robot.radius, self.mode,
             self.occ.explored if self.mode == "slam" else None,
         )
 
         self.sensor_stats = {
-            "lidar_valid": 1.0,
-            "camera_conf": 0.0,
-            "ess_frac": 1.0,
-            "cov_trace": 0.01,
-            "obstacle_points": 0,
+            "lidar_valid": 1.0, "camera_conf": 0.0, "ess_frac": 1.0,
+            "cov_trace": 0.01, "obstacle_points": 0,
         }
 
         self.telemetry: List[Dict[str, Any]] = []
         self.latest_frame: Optional[np.ndarray] = None
 
-    def step_once(self, render: bool = True) -> Optional[np.ndarray]:
+    def step_once(self, render: bool = True):
         dt = SIM_DT
         self.world.update(dt)
-
         self.robot.update(self.last_cmd, dt)
 
         collided = self.world.collision(self.robot.true_pose, self.robot.radius)
@@ -1309,18 +1068,13 @@ class NavigationSim:
             self.nav.recoveries += 1
         else:
             self.travel_distance += dist2d(
-                self.robot.true_pose.x,
-                self.robot.true_pose.y,
-                self.robot.prev_true.x,
-                self.robot.prev_true.y,
+                self.robot.true_pose.x, self.robot.true_pose.y,
+                self.robot.prev_true.x, self.robot.prev_true.y,
             )
 
         ranges, angles, valid = self.world.scan(
-            self.robot.true_pose,
-            n_rays=60,
-            max_range=5.0,
-            noise=self.params["lidar_noise"],
-            drop_prob=self.params["lidar_drop"],
+            self.robot.true_pose, n_rays=60, max_range=5.0,
+            noise=self.params["lidar_noise"], drop_prob=self.params["lidar_drop"],
         )
         camera = self.world.camera_detections(self.robot.true_pose, max_range=4.0)
 
@@ -1340,11 +1094,9 @@ class NavigationSim:
             cov_trace = float(np.trace(self.cov))
         else:
             assert self.pf is not None
-            self.pf.motion_update(
-                self.robot.odom_delta,
-                noise_xy=self.params["process_noise"],
-                noise_th=self.params["process_noise"] * 0.8,
-            )
+            self.pf.motion_update(self.robot.odom_delta,
+                                  noise_xy=self.params["process_noise"],
+                                  noise_th=self.params["process_noise"] * 0.8)
 
             if self.mode == "slam" and self.occ.is_empty():
                 self.occ.update(self.robot.odom_pose, ranges, angles, valid, 5.0)
@@ -1379,24 +1131,14 @@ class NavigationSim:
         }
 
         self.latest_blocked, self.latest_dist = build_costmap(
-            self.world,
-            self.occ_prob,
-            self.perceived_obs,
-            self.params["safety_margin"],
-            self.robot.radius,
-            self.mode,
+            self.world, self.occ_prob, self.perceived_obs,
+            self.params["safety_margin"], self.robot.radius, self.mode,
             self.occ.explored if self.mode == "slam" else None,
         )
 
         cmd = self.nav.compute(
-            self.estimate,
-            self.latest_blocked,
-            self.latest_dist,
-            self.world,
-            self.perceived_obs,
-            self.robot.twist,
-            self.sensor_stats,
-            dt,
+            self.estimate, self.latest_blocked, self.latest_dist, self.world,
+            self.perceived_obs, self.robot.twist, self.sensor_stats, dt,
         )
         self.last_cmd = cmd
 
@@ -1438,33 +1180,21 @@ class NavigationSim:
                 aa = float(self.latest_angles[i])
                 ex = tp.x + rr * math.cos(aa)
                 ey = tp.y + rr * math.sin(aa)
-                rays.append([r3(ex), r3(ey)])
-
-        path_pts = [[r3(p.x), r3(p.y)] for p in self.nav.path]
-
-        dyn: List[Dict[str, Any]] = []
-        block: List[Dict[str, Any]] = []
-        for obs in self.world.active_obstacles():
-            item = {
-                "x": r3(obs["x"]),
-                "y": r3(obs["y"]),
-                "r": r3(obs["radius"]),
-                "name": obs["name"],
-            }
-            if obs["kind"] == "dynamic":
-                dyn.append(item)
-            else:
-                block.append(item)
+                rays.append([r3(ex), r3(ey), 1 if rr < 4.75 else 0])
 
         err = dist2d(self.estimate.x, self.estimate.y, self.robot.true_pose.x, self.robot.true_pose.y)
+
+        dyn = [{"x": r3(o["x"]), "y": r3(o["y"]), "r": r3(o["radius"]), "name": o["name"]}
+               for o in self.world.active_obstacles() if o["kind"] == "dynamic"]
+        block = [{"x": r3(o["x"]), "y": r3(o["y"]), "r": r3(o["radius"]), "name": o["name"]}
+                 for o in self.world.active_obstacles() if o["kind"] == "blocker"]
 
         return {
             "t": r3(self.t),
             "state": self.nav.state,
             "true": [r3(self.robot.true_pose.x), r3(self.robot.true_pose.y), r3(self.robot.true_pose.theta)],
-            "odom": [r3(self.robot.odom_pose.x), r3(self.robot.odom_pose.y), r3(self.robot.odom_pose.theta)],
             "est": [r3(self.estimate.x), r3(self.estimate.y), r3(self.estimate.theta)],
-            "path": path_pts,
+            "path": [[r3(p.x), r3(p.y)] for p in self.nav.path],
             "rays": rays,
             "dyn": dyn,
             "block": block,
@@ -1499,21 +1229,13 @@ class NavigationSim:
             "final_loc_error_m": round(float(errors[-1]), 3) if errors else 0.0,
         }
 
+    # ---------------- 2D top-down render (dashboard + MP4 recorder) ----------------
     def render(self) -> np.ndarray:
         canvas = np.zeros((CANVAS_H, CANVAS_W, 3), dtype=np.uint8)
 
-        cv2.putText(
-            canvas,
-            "Autonomous Mobile Robot Navigation — ROS 2-inspired Live Simulation",
-            (18, 32),
-            cv2.FONT_HERSHEY_SIMPLEX,
-            0.62,
-            (240, 240, 240),
-            1,
-            cv2.LINE_AA,
-        )
+        cv2.putText(canvas, "Autonomous Mobile Robot Navigation - Live Simulation (top-down recorder view)",
+                    (18, 32), cv2.FONT_HERSHEY_SIMPLEX, 0.62, (240, 240, 240), 1, cv2.LINE_AA)
 
-        # Map panel.
         cv2.rectangle(canvas, (12, 48), (735, 610), (65, 65, 65), 1)
 
         map_x, map_y = 20, 60
@@ -1525,10 +1247,7 @@ class NavigationSim:
         draw_w = int(world_w_m * scale)
         draw_h = int(world_h_m * scale)
 
-        if self.mode == "slam":
-            wall_mask = self.occ_prob > 0.60
-        else:
-            wall_mask = self.world.grid == 1
+        wall_mask = self.occ_prob > 0.60 if self.mode == "slam" else self.world.grid == 1
 
         vis = np.zeros((self.world.rows, self.world.cols, 3), dtype=np.uint8)
         vis[:] = (42, 42, 42)
@@ -1536,15 +1255,13 @@ class NavigationSim:
         vis = cv2.resize(vis, (draw_w, draw_h), interpolation=cv2.INTER_NEAREST)
         canvas[map_y:map_y + draw_h, map_x:map_x + draw_w] = vis
 
-        def w2p(x: float, y: float) -> Tuple[int, int]:
+        def w2p(x, y):
             return int(map_x + x * scale), int(map_y + y * scale)
 
-        # Path.
         if len(self.nav.path) > 1:
             pts = np.array([[w2p(p.x, p.y)] for p in self.nav.path], dtype=np.int32).reshape(-1, 1, 2)
             cv2.polylines(canvas, [pts], False, (0, 190, 255), 2, cv2.LINE_AA)
 
-        # Goals.
         current_name = self.nav.current_goal.name if self.nav.current_goal else None
         for g in self.world.goal_list():
             pt = w2p(g.pose.x, g.pose.y)
@@ -1552,7 +1269,6 @@ class NavigationSim:
             cv2.drawMarker(canvas, pt, color, cv2.MARKER_CROSS, 14, 2, cv2.LINE_AA)
             cv2.putText(canvas, g.name, (pt[0] + 8, pt[1] - 8), cv2.FONT_HERSHEY_SIMPLEX, 0.35, color, 1, cv2.LINE_AA)
 
-        # True active obstacles.
         for obs in self.world.active_obstacles():
             center = w2p(obs["x"], obs["y"])
             radius = max(2, int(obs["radius"] * scale))
@@ -1560,13 +1276,11 @@ class NavigationSim:
             cv2.circle(canvas, center, radius, color, -1, cv2.LINE_AA)
             cv2.circle(canvas, center, radius, (255, 255, 255), 1, cv2.LINE_AA)
 
-        # Perceived obstacles.
         for obs in self.perceived_obs:
             center = w2p(obs["x"], obs["y"])
             radius = max(2, int(obs["radius"] * scale))
             cv2.circle(canvas, center, radius + 2, (0, 255, 0), 1, cv2.LINE_AA)
 
-        # Lidar rays from estimated pose.
         if self.latest_scan is not None and self.latest_angles is not None and self.latest_valid is not None:
             est = self.estimate
             p0 = w2p(est.x, est.y)
@@ -1575,54 +1289,34 @@ class NavigationSim:
                     continue
                 r = float(self.latest_scan[i])
                 a = float(self.latest_angles[i])
-                ex = est.x + r * math.cos(a)
-                ey = est.y + r * math.sin(a)
-                p1 = w2p(ex, ey)
+                p1 = w2p(est.x + r * math.cos(a), est.y + r * math.sin(a))
                 color = (0, 220, 0) if r < 4.75 else (90, 90, 90)
                 cv2.line(canvas, p0, p1, color, 1, cv2.LINE_AA)
 
-        def draw_pose_triangle(img: np.ndarray, pose: Pose, color: Tuple[int, int, int], size: int = 9) -> None:
+        def draw_pose_triangle(pose, color, size=9):
             x, y = w2p(pose.x, pose.y)
             pts = []
             for ang in [pose.theta, pose.theta + 2.35, pose.theta - 2.35]:
-                px = x + size * math.cos(ang)
-                py = y + size * math.sin(ang)
-                pts.append([int(px), int(py)])
-            cv2.fillPoly(img, [np.array(pts, dtype=np.int32)], color)
-            cv2.circle(img, (x, y), 2, (255, 255, 255), -1, cv2.LINE_AA)
+                pts.append([int(x + size * math.cos(ang)), int(y + size * math.sin(ang))])
+            cv2.fillPoly(canvas, [np.array(pts, dtype=np.int32)], color)
+            cv2.circle(canvas, (x, y), 2, (255, 255, 255), -1, cv2.LINE_AA)
 
-        draw_pose_triangle(canvas, self.robot.true_pose, (0, 255, 0), 10)
-        draw_pose_triangle(canvas, self.estimate, (255, 180, 0), 8)
-        draw_pose_triangle(canvas, self.robot.odom_pose, (0, 255, 255), 6)
+        draw_pose_triangle(self.robot.true_pose, (0, 255, 0), 10)
+        draw_pose_triangle(self.estimate, (255, 180, 0), 8)
+        draw_pose_triangle(self.robot.odom_pose, (0, 255, 255), 6)
 
-        # Right dashboard panel.
         panel_x = 755
         cv2.rectangle(canvas, (panel_x - 10, 48), (1270, 685), (70, 70, 70), 1)
 
         state_colors = {
-            "IDLE": (180, 180, 180),
-            "PLANNING": (255, 180, 0),
-            "FOLLOWING": (0, 220, 0),
-            "RECOVERY": (0, 140, 255),
-            "SAFETY_STOP": (0, 0, 255),
-            "GOAL_REACHED": (255, 255, 0),
-            "ALL_GOALS_COMPLETE": (255, 0, 0),
+            "IDLE": (180, 180, 180), "PLANNING": (255, 180, 0), "FOLLOWING": (0, 220, 0),
+            "RECOVERY": (0, 140, 255), "SAFETY_STOP": (0, 0, 255),
+            "GOAL_REACHED": (255, 255, 0), "ALL_GOALS_COMPLETE": (255, 0, 0),
         }
-        state_color = state_colors.get(self.nav.state, (220, 220, 220))
-
-        cv2.putText(
-            canvas,
-            f"STATE: {self.nav.state}",
-            (panel_x, 74),
-            cv2.FONT_HERSHEY_SIMPLEX,
-            0.62,
-            state_color,
-            2,
-            cv2.LINE_AA,
-        )
+        cv2.putText(canvas, f"STATE: {self.nav.state}", (panel_x, 74),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.62, state_colors.get(self.nav.state, (220, 220, 220)), 2, cv2.LINE_AA)
 
         err = dist2d(self.estimate.x, self.estimate.y, self.robot.true_pose.x, self.robot.true_pose.y)
-        current_goal_name = self.nav.current_goal.name if self.nav.current_goal else "-"
 
         lines = [
             f"Scenario: {self.params.get('scenario_label', self.world.scenario)}",
@@ -1630,21 +1324,18 @@ class NavigationSim:
             f"Sim time: {self.t:5.1f}s   Step: {self.step}",
             f"Travel distance: {self.travel_distance:5.2f} m",
             "",
-            f"True pose : ({self.robot.true_pose.x:5.2f}, {self.robot.true_pose.y:5.2f}, {math.degrees(self.robot.true_pose.theta):6.1f} deg)",
-            f"Odom pose : ({self.robot.odom_pose.x:5.2f}, {self.robot.odom_pose.y:5.2f}, {math.degrees(self.robot.odom_pose.theta):6.1f} deg)",
-            f"Est pose  : ({self.estimate.x:5.2f}, {self.estimate.y:5.2f}, {math.degrees(self.estimate.theta):6.1f} deg)",
+            f"True pose : ({self.robot.true_pose.x:5.2f}, {self.robot.true_pose.y:5.2f})",
+            f"Est pose  : ({self.estimate.x:5.2f}, {self.estimate.y:5.2f})",
             f"Loc error : {err:5.3f} m",
-            f"ESS frac  : {self.sensor_stats['ess_frac']:5.2f}   Cov trace: {self.sensor_stats['cov_trace']:5.3f}",
+            f"ESS frac  : {self.sensor_stats['ess_frac']:5.2f}   Cov: {self.sensor_stats['cov_trace']:5.3f}",
             "",
-            f"Lidar valid: {self.sensor_stats['lidar_valid'] * 100:5.1f}%   Obstacle pts: {self.sensor_stats['obstacle_points']}",
+            f"Lidar valid: {self.sensor_stats['lidar_valid'] * 100:5.1f}%",
             f"Camera conf: {self.sensor_stats['camera_conf'] * 100:5.1f}%",
-            f"Command    : vx={self.last_cmd.vx:5.2f} m/s   w={self.last_cmd.w:5.2f} rad/s",
-            f"Velocity   : vx={self.robot.twist.vx:5.2f} m/s   w={self.robot.twist.w:5.2f} rad/s",
+            f"Cmd vx={self.last_cmd.vx:5.2f}  w={self.last_cmd.w:5.2f}",
             "",
-            f"Current goal : {current_goal_name}",
+            f"Current goal : {self.nav.current_goal.name if self.nav.current_goal else '-'}",
             f"Queued goals : {len(self.nav.goal_queue)}",
             f"Completed    : {len(self.nav.completed)}",
-            f"Path points  : {len(self.nav.path)}",
             f"Collisions   : {self.collisions}",
             f"Recoveries   : {self.nav.recoveries}",
             f"Safety stops : {self.nav.safety_stops}",
@@ -1655,54 +1346,102 @@ class NavigationSim:
             cv2.putText(canvas, line, (panel_x, y), cv2.FONT_HERSHEY_SIMPLEX, 0.40, (235, 235, 235), 1, cv2.LINE_AA)
             y += 20
 
-        def draw_bar(img: np.ndarray, x: int, yy: int, w: int, h: int, frac: float, color: Tuple[int, int, int], label: str) -> None:
-            frac = clamp(frac, 0.0, 1.0)
-            cv2.rectangle(img, (x, yy), (x + w, yy + h), (95, 95, 95), 1)
-            cv2.rectangle(img, (x, yy), (x + int(w * frac), yy + h), color, -1)
-            cv2.putText(img, label, (x, yy - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.35, (210, 210, 210), 1, cv2.LINE_AA)
-
-        draw_bar(canvas, panel_x, 475, 180, 12, self.sensor_stats["lidar_valid"], (0, 200, 0), "Lidar health")
-        draw_bar(canvas, panel_x + 210, 475, 180, 12, self.sensor_stats["camera_conf"], (255, 180, 0), "Camera confidence")
-        draw_bar(canvas, panel_x, 515, 180, 12, self.sensor_stats["ess_frac"], (0, 220, 220), "Localization ESS")
-        draw_bar(canvas, panel_x + 210, 515, 180, 12, clamp(1.0 - self.sensor_stats["cov_trace"] / 2.0, 0.0, 1.0), (180, 0, 255), "Low uncertainty")
-
-        # Mini camera strip.
-        cam_img = np.zeros((100, 190, 3), dtype=np.uint8)
-        cv2.rectangle(cam_img, (0, 0), (189, 99), (80, 80, 80), 1)
-        for det in self.latest_camera:
-            x = int(((det["bearing"] + 0.60) / 1.20) * 189)
-            x = clamp(x, 0, 186)
-            hh = int(det["confidence"] * 90)
-            color = (0, 200, 255) if det["type"] != "free" else (130, 130, 130)
-            cv2.rectangle(cam_img, (x, 100 - hh), (x + 2, 100), color, -1)
-
-        canvas[560:660, panel_x:panel_x + 190] = cam_img
-        cv2.putText(canvas, "Forward camera detections", (panel_x, 555), cv2.FONT_HERSHEY_SIMPLEX, 0.38, (220, 220, 220), 1, cv2.LINE_AA)
-
-        cv2.putText(
-            canvas,
-            "Legend: green=true robot, blue=estimated pose, yellow=odometry, red=dynamic obstacle, orange=temporary blocker",
-            (18, 695),
-            cv2.FONT_HERSHEY_SIMPLEX,
-            0.38,
-            (190, 190, 190),
-            1,
-            cv2.LINE_AA,
-        )
-
         return canvas
 
 
 # ----------------------------------------------------------------------
-# Video generation
+# 3D Gazebo-style scene builder
+# ----------------------------------------------------------------------
+
+def build_scene(sim: NavigationSim) -> Dict[str, Any]:
+    w = sim.world
+    rng = np.random.default_rng(991)
+    W = w.cols * w.res
+    H = w.rows * w.res
+
+    cub: List[Dict[str, Any]] = []
+    marks: List[Dict[str, Any]] = []
+
+    wall_h = 2.0
+    t = 0.12
+    cub.append({"c": [W / 2, -t / 2, wall_h / 2], "s": [W + 2 * t, t, wall_h], "yaw": 0.0, "col": [206, 206, 201]})
+    cub.append({"c": [W / 2, H + t / 2, wall_h / 2], "s": [W + 2 * t, t, wall_h], "yaw": 0.0, "col": [198, 198, 194]})
+    cub.append({"c": [-t / 2, H / 2, wall_h / 2], "s": [t, H + 2 * t, wall_h], "yaw": 0.0, "col": [192, 192, 188]})
+    cub.append({"c": [W + t / 2, H / 2, wall_h / 2], "s": [t, H + 2 * t, wall_h], "yaw": 0.0, "col": [200, 200, 196]})
+
+    def brown():
+        base = 140 + int(rng.integers(0, 45))
+        return [base, int(base * 0.72), int(base * 0.42)]
+
+    def rack(cx, y0, y1):
+        ln = y1 - y0
+        for px in (cx - 0.12, cx + 0.12):
+            for py in (y0 + 0.06, y1 - 0.06):
+                cub.append({"c": [px, py, 0.55], "s": [0.05, 0.05, 1.1], "yaw": 0.0, "col": [48, 48, 52]})
+        for z in (0.42, 0.84):
+            cub.append({"c": [cx, (y0 + y1) / 2, z], "s": [0.26, ln - 0.08, 0.05], "yaw": 0.0, "col": [228, 196, 10]})
+        for z in (0.62, 1.04):
+            n = 3
+            for i in range(n):
+                cy = y0 + ln * (i + 0.5) / n
+                cub.append({"c": [cx, cy, z], "s": [0.28, ln / n * 0.8, 0.34], "yaw": 0.0, "col": brown()})
+        if rng.random() < 0.8:
+            cub.append({"c": [cx, (y0 + y1) / 2 + float(rng.uniform(-0.3, 0.3)), 1.42],
+                        "s": [0.26, 0.4, 0.3], "yaw": 0.0, "col": brown()})
+        for i in range(2):
+            cy = y0 + ln * (0.25 + 0.5 * i)
+            cub.append({"c": [cx, cy, 0.16], "s": [0.24, 0.3, 0.32], "yaw": 0.0, "col": brown()})
+
+    if w.scenario == "corridor":
+        x = 0.6
+        while x < W - 0.5:
+            for yy in (0.55, H - 0.55):
+                cub.append({"c": [x, yy, 0.25], "s": [0.4, 0.4, 0.5], "yaw": 0.0, "col": brown()})
+                if rng.random() < 0.6:
+                    cub.append({"c": [x + 0.05, yy, 0.62], "s": [0.32, 0.32, 0.3], "yaw": 0.0, "col": brown()})
+            x += 0.9
+    else:
+        for c in (15, 35, 55):
+            rack(c * 0.1, 0.8, 2.3)
+            rack(c * 0.1, 2.8, 4.3)
+        cub.append({"c": [3.5, 4.05, 0.28], "s": [0.36, 0.5, 0.56], "yaw": 0.0, "col": [25, 125, 35]})
+        cub.append({"c": [3.5, 4.05, 0.60], "s": [0.40, 0.54, 0.08], "yaw": 0.0, "col": [18, 95, 28]})
+
+    for yy in (0.72, 2.5, 4.45):
+        if yy < H - 0.2:
+            marks.append({"pts": [[0.15, yy - 0.025], [W - 0.15, yy - 0.025],
+                                  [W - 0.15, yy + 0.025], [0.15, yy + 0.025]],
+                          "col": [0, 150, 70], "z": 0.006})
+
+    x = 0.6
+    while x < 3.2:
+        col = [230, 200, 0] if int(x / 0.2) % 2 == 0 else [25, 25, 25]
+        marks.append({"pts": [[x, 2.94], [x + 0.2, 2.94], [x + 0.2, 3.06], [x, 3.06]], "col": col, "z": 0.006})
+        x += 0.2
+
+    y = 0.6
+    while y < 2.4:
+        col = [230, 200, 0] if int(y / 0.2) % 2 == 0 else [25, 25, 25]
+        marks.append({"pts": [[1.94, y], [2.06, y], [2.06, y + 0.2], [1.94, y + 0.2]], "col": col, "z": 0.006})
+        y += 0.2
+
+    return {
+        "W": r3(W), "H": r3(H), "res": w.res,
+        "cols": w.cols, "rows": w.rows,
+        "grid": w.grid.reshape(-1).astype(int).tolist(),
+        "cuboids": cub,
+        "marks": marks,
+        "goals": [{"name": g.name, "x": r3(g.pose.x), "y": r3(g.pose.y)} for g in w.goal_list()],
+    }
+
+
+# ----------------------------------------------------------------------
+# Video writer (top-down recorder MP4)
 # ----------------------------------------------------------------------
 
 def create_video_writer(base_path: Path, fps: int, size: Tuple[int, int]):
     base_path = Path(base_path)
-    candidates = [
-        (base_path.with_suffix(".mp4"), "mp4v"),
-        (base_path.with_suffix(".avi"), "XVID"),
-    ]
+    candidates = [(base_path.with_suffix(".mp4"), "mp4v"), (base_path.with_suffix(".avi"), "XVID")]
 
     for path, codec in candidates:
         fourcc = cv2.VideoWriter_fourcc(*codec)
@@ -1713,34 +1452,9 @@ def create_video_writer(base_path: Path, fps: int, size: Tuple[int, int]):
     return None, candidates[0][0]
 
 
-def build_demo_payload(sim: NavigationSim, frames: List[Dict[str, Any]], params: Dict[str, Any]) -> Dict[str, Any]:
-    summary = sim.summary()
-    summary["scenario"] = params.get("scenario_label", sim.world.scenario)
-    summary["mode"] = params.get("mode_label", sim.mode)
-
-    return {
-        "fps": int(params["fps"]),
-        "world": {
-            "cols": int(sim.world.cols),
-            "rows": int(sim.world.rows),
-            "res": float(sim.world.res),
-            "width_m": r3(sim.world.cols * sim.world.res),
-            "height_m": r3(sim.world.rows * sim.world.res),
-            "grid": sim.world.grid.reshape(-1).astype(int).tolist(),
-            "goals": [
-                {
-                    "name": g.name,
-                    "x": r3(g.pose.x),
-                    "y": r3(g.pose.y),
-                    "theta": r3(g.pose.theta),
-                }
-                for g in sim.world.goal_list()
-            ],
-        },
-        "frames": frames,
-        "summary": summary,
-    }
-
+# ----------------------------------------------------------------------
+# Embedded Gazebo-style 3D live viewer (HTML/JS)
+# ----------------------------------------------------------------------
 
 def make_live_html(data: Dict[str, Any]) -> str:
     payload = json.dumps(data, separators=(",", ":"))
@@ -1751,439 +1465,329 @@ def make_live_html(data: Dict[str, Any]) -> str:
 <head>
 <meta charset="utf-8">
 <style>
-  body {
-    margin: 0;
-    background: #111;
-    color: #eee;
-    font-family: Arial, sans-serif;
-  }
-  .wrap {
-    padding: 10px;
-  }
-  canvas {
-    width: 100%;
-    height: auto;
-    background: #121212;
-    border: 1px solid #3a3a3a;
-    border-radius: 10px;
-  }
-  .controls {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    align-items: center;
-    margin-top: 8px;
-  }
-  button {
-    background: #222;
-    color: #eee;
-    border: 1px solid #555;
-    border-radius: 6px;
-    padding: 6px 10px;
-    cursor: pointer;
-  }
-  button:hover {
-    background: #333;
-  }
-  select, input[type=range] {
-    background: #222;
-    color: #eee;
-    border: 1px solid #555;
-    border-radius: 6px;
-  }
-  .label {
-    font-size: 12px;
-    color: #bbb;
-  }
-  #status {
-    font-size: 12px;
-    color: #9f9;
-    margin-top: 4px;
-  }
+  html,body{margin:0;background:#3f3f3f;font-family:Ubuntu,Arial,sans-serif;color:#ddd;overflow:hidden}
+  #menubar{height:26px;background:#4c4c4c;border-bottom:1px solid #333;display:flex;align-items:center;padding:0 10px;font-size:13px}
+  #menubar span{margin-right:18px;cursor:default}
+  #menubar span u{text-decoration:underline}
+  #toolbar{height:34px;background:#5a5a5a;border-bottom:1px solid #333;display:flex;align-items:center;padding:0 8px;gap:6px}
+  .ticon{width:22px;height:22px;background:#6a6a6a;border:1px solid #474747;border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:12px;color:#cfcfcf}
+  #stage{position:relative;background:#8f8f8f}
+  canvas{display:block}
+  #statusbar{height:30px;background:#5a5a5a;border-top:1px solid #333;display:flex;align-items:center;padding:0 10px;font-size:12px;gap:14px;color:#e8e8e8}
+  #statusbar .fld{background:#4a4a4a;border:1px solid #3a3a3a;padding:2px 8px;border-radius:3px}
+  #statusbar button{background:#6a6a6a;border:1px solid #474747;color:#eee;border-radius:3px;padding:2px 10px;cursor:pointer}
+  #controls{height:34px;background:#4c4c4c;display:flex;align-items:center;gap:8px;padding:0 10px;font-size:12px}
+  #controls button,#controls select{background:#6a6a6a;border:1px solid #474747;color:#eee;border-radius:3px;padding:2px 8px;cursor:pointer}
+  #controls input[type=range]{flex:1}
 </style>
 </head>
 <body>
-<div class="wrap">
-  <canvas id="cv" width="1280" height="680"></canvas>
-  <div class="controls">
-    <button id="play">Pause</button>
-    <button id="restart">Restart</button>
-    <button id="prev">Prev</button>
-    <button id="next">Next</button>
-    <span class="label">Speed</span>
-    <select id="speed">
-      <option value="0.5">0.5x</option>
-      <option value="1" selected>1x</option>
-      <option value="2">2x</option>
-    </select>
-    <input id="timeline" type="range" min="0" max="0" value="0" style="flex:1">
-    <span id="time" class="label">0.0s</span>
-  </div>
-  <div id="status">Loading live simulation demo...</div>
+<div id="menubar">
+  <span><u>F</u>ile</span><span><u>E</u>dit</span><span><u>C</u>amera</span>
+  <span><u>V</u>iew</span><span><u>W</u>indow</span><span><u>H</u>elp</span>
+</div>
+<div id="toolbar">
+  <div class="ticon">&#9650;</div><div class="ticon">&#10010;</div><div class="ticon">&#8635;</div>
+  <div class="ticon">&#9645;</div><div class="ticon">&#9679;</div><div class="ticon">&#9646;</div>
+  <div class="ticon">&#9728;</div><div class="ticon">&#10022;</div><div class="ticon">&#9629;</div>
+  <div class="ticon">&#9630;</div><div class="ticon">&#8644;</div><div class="ticon">&#9711;</div>
+</div>
+<div id="stage"><canvas id="cv" width="1280" height="620"></canvas></div>
+<div id="statusbar">
+  <button id="gzpause">&#10074;&#10074;</button><button id="gzstep">&#10095;&#10095;</button>
+  <span>Steps: <span class="fld" id="steps">1</span></span>
+  <span>Real Time Factor: <span class="fld">0.86</span></span>
+  <span>Sim Time: <span class="fld" id="simtime">00 00:00:00.000</span></span>
+  <span>Real Time: <span class="fld" id="realtime">00 00:00:00.000</span></span>
+  <span>Iterations: <span class="fld" id="iters">56538</span></span>
+  <span>FPS: <span class="fld" id="fps">0</span></span>
+  <button id="gzreset">Reset Time</button>
+</div>
+<div id="controls">
+  <button id="play">Pause</button><button id="restart">Restart</button>
+  <span>Speed</span>
+  <select id="speed"><option value="0.5">0.5x</option><option value="1" selected>1x</option><option value="2">2x</option></select>
+  <span>Camera</span>
+  <select id="cam"><option value="fixed" selected>Fixed overlook (screenshot)</option><option value="chase">Chase robot</option></select>
+  <label><input type="checkbox" id="minimap"> Minimap</label>
+  <input id="timeline" type="range" min="0" max="0" value="0">
+  <span id="time">0.0s</span>
 </div>
 
 <script>
 const DATA = __DATA__;
+const S = DATA.scene, FR = DATA.frames;
+const cv = document.getElementById("cv"), ctx = cv.getContext("2d");
+const W = cv.width, H = cv.height, CX = W/2, CY = H/2 + 30, NEAR = 0.06;
+const focal = H * 1.15;
+const Ld = norm3([0.35,-0.45,0.82]);
 
-(function () {
-  const statusEl = document.getElementById("status");
+let cam=[0,0,0], R=[1,0,0], U=[0,1,0], F=[0,0,1];
+let camPos=[S.W*0.10,-S.H*0.38,Math.min(2.5,S.H*0.52)];
+let camMode="fixed";
 
-  if (!DATA || !DATA.frames || DATA.frames.length === 0) {
-    statusEl.textContent = "No demo frames were generated.";
-    return;
+function norm3(v){const l=Math.hypot(v[0],v[1],v[2])||1;return [v[0]/l,v[1]/l,v[2]/l];}
+function sub3(a,b){return [a[0]-b[0],a[1]-b[1],a[2]-b[2]];}
+function cross3(a,b){return [a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]];}
+function dot3(a,b){return a[0]*b[0]+a[1]*b[1]+a[2]*b[2];}
+
+function setCam(pos,tgt){
+  cam=pos;
+  F=norm3(sub3(tgt,pos));
+  R=norm3(cross3(F,[0,0,1]));
+  U=cross3(R,F);
+}
+function proj(p){
+  const d=sub3(p,cam);
+  const xc=dot3(d,R), yc=dot3(d,U), zc=dot3(d,F);
+  if(zc<NEAR) return null;
+  const s=focal/zc;
+  return [CX+xc*s, CY-yc*s, zc];
+}
+function rotYaw(x,y,yaw){const c=Math.cos(yaw),s=Math.sin(yaw);return [x*c-y*s, x*s+y*c];}
+
+let faces=[];
+function pushCub(c,s,yaw,col){
+  const hx=s[0]/2, hy=s[1]/2, hz=s[2]/2;
+  const L=[[-hx,-hy,-hz],[hx,-hy,-hz],[hx,hy,-hz],[-hx,hy,-hz],
+           [-hx,-hy,hz],[hx,-hy,hz],[hx,hy,hz],[-hx,hy,hz]];
+  const FS=[[[0,1,2,3],[0,0,-1]],[[4,5,6,7],[0,0,1]],[[0,1,5,4],[0,-1,0]],
+            [[2,3,7,6],[0,1,0]],[[1,2,6,5],[1,0,0]],[[0,3,7,4],[-1,0,0]]];
+  const wp=[];
+  for(let i=0;i<8;i++){
+    const r=rotYaw(L[i][0],L[i][1],yaw);
+    wp.push([c[0]+r[0], c[1]+r[1], c[2]+L[i][2]]);
   }
-
-  const cv = document.getElementById("cv");
-  const ctx = cv.getContext("2d");
-  const W = cv.width;
-  const H = cv.height;
-
-  const world = DATA.world;
-  const frames = DATA.frames;
-
-  const panelX = 760;
-  const mapBox = { x: 18, y: 52, w: 720, h: 545 };
-
-  const scale = Math.min(
-    (mapBox.w - 20) / world.width_m,
-    (mapBox.h - 20) / world.height_m
-  );
-
-  const ox = mapBox.x + 10;
-  const oy = mapBox.y + 10;
-  const cell = world.res * scale;
-
-  const mapW = Math.ceil(world.cols * cell);
-  const mapH = Math.ceil(world.rows * cell);
-
-  const mapCanvas = document.createElement("canvas");
-  mapCanvas.width = mapW;
-  mapCanvas.height = mapH;
-  const mctx = mapCanvas.getContext("2d");
-
-  mctx.fillStyle = "#2a2a2a";
-  mctx.fillRect(0, 0, mapW, mapH);
-
-  mctx.fillStyle = "#c8c8c8";
-  for (let r = 0; r < world.rows; r++) {
-    for (let c = 0; c < world.cols; c++) {
-      if (world.grid[r * world.cols + c] === 1) {
-        mctx.fillRect(
-          Math.floor(c * cell),
-          Math.floor(r * cell),
-          Math.ceil(cell) + 1,
-          Math.ceil(cell) + 1
-        );
-      }
+  for(let f=0;f<6;f++){
+    const idx=FS[f][0];
+    let nl=FS[f][1];
+    const rr=rotYaw(nl[0],nl[1],yaw);
+    const nw=[rr[0],rr[1],nl[2]];
+    let cx=0,cy=0,cz=0;
+    for(const i of idx){cx+=wp[i][0];cy+=wp[i][1];cz+=wp[i][2];}
+    cx/=4;cy/=4;cz/=4;
+    if(dot3(nw,[cx-cam[0],cy-cam[1],cz-cam[2]])>=0) continue;
+    const pts=[];
+    let zsum=0, ok=true;
+    for(const i of idx){
+      const p=proj(wp[i]);
+      if(!p){ok=false;break;}
+      pts.push([p[0],p[1]]);
+      zsum+=p[2];
     }
+    if(!ok) continue;
+    const li=0.52+0.48*Math.max(0,dot3(nw,Ld));
+    faces.push({p:pts, z:zsum/4,
+      col:"rgb("+Math.min(255,col[0]*li|0)+","+Math.min(255,col[1]*li|0)+","+Math.min(255,col[2]*li|0)+")"});
   }
-
-  function wx(x) {
-    return ox + x * scale;
-  }
-
-  function wy(y) {
-    return oy + y * scale;
-  }
-
-  function clamp(v, a, b) {
-    return Math.max(a, Math.min(b, v));
-  }
-
-  function drawTriangle(pose, color, size) {
-    const x = wx(pose[0]);
-    const y = wy(pose[1]);
-    const th = pose[2];
-
+}
+function drawFaces(){
+  faces.sort((a,b)=>b.z-a.z);
+  for(const f of faces){
     ctx.beginPath();
-    ctx.moveTo(x + size * Math.cos(th), y + size * Math.sin(th));
-    ctx.lineTo(x + size * Math.cos(th + 2.35), y + size * Math.sin(th + 2.35));
-    ctx.lineTo(x + size * Math.cos(th - 2.35), y + size * Math.sin(th - 2.35));
+    ctx.moveTo(f.p[0][0],f.p[0][1]);
+    for(let i=1;i<f.p.length;i++) ctx.lineTo(f.p[i][0],f.p[i][1]);
     ctx.closePath();
-
-    ctx.fillStyle = color;
+    ctx.fillStyle=f.col;
     ctx.fill();
-
-    ctx.strokeStyle = "#ffffff";
-    ctx.lineWidth = 1;
+    ctx.strokeStyle=f.col;
+    ctx.lineWidth=0.6;
     ctx.stroke();
   }
+  faces=[];
+}
+function poly(pts3,col,alpha){
+  const pp=[];
+  for(const p of pts3){const q=proj(p);if(!q)return;pp.push(q);}
+  ctx.beginPath();
+  ctx.moveTo(pp[0][0],pp[0][1]);
+  for(let i=1;i<pp.length;i++) ctx.lineTo(pp[i][0],pp[i][1]);
+  ctx.closePath();
+  ctx.globalAlpha=alpha==null?1:alpha;
+  ctx.fillStyle=col;
+  ctx.fill();
+  ctx.globalAlpha=1;
+}
+function line3(a,b,col,wd,alpha){
+  const p=proj(a),q=proj(b);
+  if(!p||!q)return;
+  ctx.beginPath();ctx.moveTo(p[0],p[1]);ctx.lineTo(q[0],q[1]);
+  ctx.strokeStyle=col;ctx.lineWidth=wd||1;
+  ctx.globalAlpha=alpha==null?1:alpha;
+  ctx.stroke();ctx.globalAlpha=1;
+}
 
-  function drawBar(x, y, w, h, frac, color, label) {
-    frac = clamp(frac, 0, 1);
+function fmtT(sec){
+  const ms=Math.floor((sec%1)*1000);
+  const s=Math.floor(sec)%60;
+  const m=Math.floor(sec/60)%60;
+  return "00 00:"+String(m).padStart(2,"0")+":"+String(s).padStart(2,"0")+"."+String(ms).padStart(3,"0");
+}
 
-    ctx.strokeStyle = "#666";
-    ctx.lineWidth = 1;
-    ctx.strokeRect(x, y, w, h);
+let idx=0, playing=true, lastTs=0, acc=0, fpsSm=0, wall0=performance.now();
+const frameDur=1000/DATA.fps;
 
-    ctx.fillStyle = color;
-    ctx.fillRect(x, y, Math.floor(w * frac), h);
+function renderFrame(i){
+  const f=FR[i], m=f.metrics||{};
+  const rp=f.true;
 
-    ctx.fillStyle = "#ddd";
-    ctx.font = "12px Arial";
-    ctx.fillText(label, x, y - 4);
+  if(camMode==="chase"){
+    const dx=Math.cos(rp[2]), dy=Math.sin(rp[2]);
+    const want=[rp[0]-1.9*dx, rp[1]-1.9*dy, 1.25];
+    camPos=[camPos[0]+(want[0]-camPos[0])*0.3, camPos[1]+(want[1]-camPos[1])*0.3, camPos[2]+(want[2]-camPos[2])*0.3];
+    setCam(camPos,[rp[0]+1.1*dx, rp[1]+1.1*dy, 0.3]);
+  } else {
+    camPos=[S.W*0.10,-S.H*0.38,Math.min(2.5,S.H*0.52)];
+    setCam(camPos,[S.W*0.55,S.H*0.52,0.25]);
   }
 
-  const stateColors = {
-    IDLE: "#b4b4b4",
-    PLANNING: "#ffb000",
-    FOLLOWING: "#00dc00",
-    RECOVERY: "#008cff",
-    SAFETY_STOP: "#ff0000",
-    GOAL_REACHED: "#ffff00",
-    ALL_GOALS_COMPLETE: "#ff00ff"
-  };
+  ctx.fillStyle="#9c9c9c";
+  ctx.fillRect(0,0,W,H);
 
-  function drawFrame(i) {
-    const f = frames[i];
-    const m = f.metrics || {};
+  // floor
+  poly([[0,0,0],[S.W,0,0],[S.W,S.H,0],[0,S.H,0]],"#b4b4b2",1);
 
-    ctx.fillStyle = "#121212";
-    ctx.fillRect(0, 0, W, H);
+  // floor marks
+  for(const mk of S.marks){
+    const pts=mk.pts.map(p=>[p[0],p[1],mk.z]);
+    poly(pts,"rgb("+mk.col[0]+","+mk.col[1]+","+mk.col[2]+")",1);
+  }
 
-    ctx.fillStyle = "#eee";
-    ctx.font = "16px Arial";
-    ctx.fillText("Autonomous Mobile Robot Navigation — Embedded Live Simulation", 18, 28);
+  // lidar fan (blue, like Gazebo scan visualization)
+  if(f.rays && f.rays.length>2){
+    const outer=[[rp[0],rp[1],0.02]];
+    const inner=[[rp[0],rp[1],0.025]];
+    for(const r of f.rays){
+      outer.push([r[0],r[1],0.02]);
+      inner.push([rp[0]+(r[0]-rp[0])*0.45, rp[1]+(r[1]-rp[1])*0.45, 0.025]);
+    }
+    poly(outer,"rgb(70,80,250)",0.26);
+    poly(inner,"rgb(60,70,255)",0.40);
+    for(const r of f.rays){
+      line3([rp[0],rp[1],0.03],[r[0],r[1],0.03],"rgb(150,160,255)",0.7,0.30);
+      if(r[2]===1) line3([rp[0],rp[1],0.04],[r[0],r[1],0.04],"rgb(255,255,255)",0.8,0.45);
+    }
+  }
 
-    ctx.strokeStyle = "#444";
-    ctx.lineWidth = 1;
-    ctx.strokeRect(12, 44, mapBox.w + 12, mapBox.h + 12);
+  // global path on floor
+  if(f.path && f.path.length>1){
+    for(let k=0;k<f.path.length-1;k++){
+      line3([f.path[k][0],f.path[k][1],0.03],[f.path[k+1][0],f.path[k+1][1],0.03],"rgb(255,150,0)",2.2,0.9);
+    }
+  }
 
-    ctx.drawImage(mapCanvas, ox, oy);
+  // goal crosses
+  const cur=m.goal||"-";
+  for(const g of S.goals){
+    const col=g.name===cur?"rgb(0,255,255)":"rgb(180,180,0)";
+    line3([g.x-0.14,g.y,0.03],[g.x+0.14,g.y,0.03],col,2.4,1);
+    line3([g.x,g.y-0.14,0.03],[g.x,g.y+0.14,0.03],col,2.4,1);
+  }
 
-    // Global path.
-    if (f.path && f.path.length > 1) {
+  // static warehouse geometry
+  for(const cb of S.cuboids) pushCub(cb.c,cb.s,cb.yaw,cb.col);
+
+  // dynamic obstacles: pallet + carton + white top plate
+  for(const o of (f.dyn||[])){
+    pushCub([o.x,o.y,0.04],[0.55,0.45,0.06],0,[110,80,40]);
+    pushCub([o.x,o.y,0.30],[0.50,0.42,0.45],0,[150,110,60]);
+    pushCub([o.x,o.y,0.55],[0.30,0.30,0.04],0,[238,238,232]);
+  }
+  for(const o of (f.block||[])){
+    pushCub([o.x,o.y,0.22],[0.45,0.45,0.44],0,[140,100,55]);
+  }
+
+  // robot: grey base + white top plate + lidar puck
+  pushCub([rp[0],rp[1],0.09],[0.34,0.30,0.14],rp[2],[120,120,126]);
+  pushCub([rp[0],rp[1],0.20],[0.50,0.42,0.07],rp[2],[242,242,238]);
+  pushCub([rp[0],rp[1],0.27],[0.07,0.07,0.08],rp[2],[60,60,64]);
+
+  drawFaces();
+
+  // HUD overlay
+  ctx.fillStyle="rgba(20,20,20,0.55)";
+  ctx.fillRect(10,36,300,86);
+  ctx.fillStyle="#eaeaea";
+  ctx.font="12px monospace";
+  ctx.fillText("STATE: "+f.state+"   goal: "+(m.goal||"-"),18,54);
+  ctx.fillText("loc err "+Number(m.err||0).toFixed(3)+" m   ESS "+Number(m.ess||0).toFixed(2),18,70);
+  ctx.fillText("lidar "+(Number(m.lidar||0)*100).toFixed(0)+"%   cam "+(Number(m.cam||0)*100).toFixed(0)+"%",18,86);
+  ctx.fillText("collisions "+(m.collisions||0)+"   recoveries "+(m.recoveries||0)+"   stops "+(m.safety||0),18,102);
+  ctx.fillText("travel "+Number(m.travel||0).toFixed(2)+" m   completed "+(m.completed||0),18,118);
+
+  // minimap
+  if(document.getElementById("minimap").checked){
+    const mw=170, mh=Math.round(mw*S.H/S.W), mx=W-mw-12, my=44;
+    ctx.fillStyle="rgba(15,15,15,0.75)";
+    ctx.fillRect(mx-4,my-4,mw+8,mh+8);
+    const sc=mw/S.W;
+    ctx.fillStyle="#c8c8c8";
+    for(let r=0;r<S.rows;r++)for(let c=0;c<S.cols;c++){
+      if(S.grid[r*S.cols+c]===1) ctx.fillRect(mx+c*sc,my+r*sc,Math.ceil(sc),Math.ceil(sc));
+    }
+    if(f.path&&f.path.length>1){
       ctx.beginPath();
-      ctx.moveTo(wx(f.path[0][0]), wy(f.path[0][1]));
-      for (let k = 1; k < f.path.length; k++) {
-        ctx.lineTo(wx(f.path[k][0]), wy(f.path[k][1]));
-      }
-      ctx.strokeStyle = "#ffb000";
-      ctx.lineWidth = 2;
-      ctx.stroke();
+      ctx.moveTo(mx+f.path[0][0]*sc,my+f.path[0][1]*sc);
+      for(const p of f.path) ctx.lineTo(mx+p[0]*sc,my+p[1]*sc);
+      ctx.strokeStyle="#ffb000";ctx.lineWidth=1.4;ctx.stroke();
     }
-
-    // Lidar rays.
-    if (f.rays && f.rays.length > 0) {
-      ctx.strokeStyle = "rgba(0, 220, 0, 0.35)";
-      ctx.lineWidth = 1;
-      const tp = f.true;
-      for (let k = 0; k < f.rays.length; k++) {
-        ctx.beginPath();
-        ctx.moveTo(wx(tp[0]), wy(tp[1]));
-        ctx.lineTo(wx(f.rays[k][0]), wy(f.rays[k][1]));
-        ctx.stroke();
-      }
-    }
-
-    // Goals.
-    const currentGoal = m.goal || "-";
-    for (let g = 0; g < world.goals.length; g++) {
-      const goal = world.goals[g];
-      const gx = wx(goal.x);
-      const gy = wy(goal.y);
-      const col = goal.name === currentGoal ? "#00ffff" : "#b4b400";
-
-      ctx.strokeStyle = col;
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.moveTo(gx - 7, gy);
-      ctx.lineTo(gx + 7, gy);
-      ctx.moveTo(gx, gy - 7);
-      ctx.lineTo(gx, gy + 7);
-      ctx.stroke();
-
-      ctx.fillStyle = col;
-      ctx.font = "11px Arial";
-      ctx.fillText(goal.name, gx + 9, gy - 7);
-    }
-
-    // Temporary blockers.
-    if (f.block) {
-      for (let k = 0; k < f.block.length; k++) {
-        const o = f.block[k];
-        ctx.beginPath();
-        ctx.arc(wx(o.x), wy(o.y), Math.max(2, o.r * scale), 0, Math.PI * 2);
-        ctx.fillStyle = "#008cff";
-        ctx.fill();
-        ctx.strokeStyle = "#ffffff";
-        ctx.lineWidth = 1;
-        ctx.stroke();
-      }
-    }
-
-    // Dynamic obstacles.
-    if (f.dyn) {
-      for (let k = 0; k < f.dyn.length; k++) {
-        const o = f.dyn[k];
-        ctx.beginPath();
-        ctx.arc(wx(o.x), wy(o.y), Math.max(2, o.r * scale), 0, Math.PI * 2);
-        ctx.fillStyle = "#ff0000";
-        ctx.fill();
-        ctx.strokeStyle = "#ffffff";
-        ctx.lineWidth = 1;
-        ctx.stroke();
-
-        ctx.beginPath();
-        ctx.arc(wx(o.x), wy(o.y), Math.max(3, o.r * scale + 2), 0, Math.PI * 2);
-        ctx.strokeStyle = "#00ff00";
-        ctx.lineWidth = 1;
-        ctx.stroke();
-      }
-    }
-
-    // Robot poses.
-    drawTriangle(f.est, "#ffb000", 8);
-    drawTriangle(f.odom, "#ffff00", 6);
-    drawTriangle(f.true, "#00ff00", 10);
-
-    // Dashboard panel.
-    ctx.strokeStyle = "#555";
-    ctx.lineWidth = 1;
-    ctx.strokeRect(panelX - 10, 44, 500, 600);
-
-    const state = f.state || "IDLE";
-    ctx.fillStyle = stateColors[state] || "#dddddd";
-    ctx.font = "bold 18px Arial";
-    ctx.fillText("STATE: " + state, panelX, 72);
-
-    const lines = [
-      "Scenario: " + (DATA.summary.scenario || ""),
-      "Mode: " + (DATA.summary.mode || ""),
-      "Sim time: " + Number(f.t || 0).toFixed(1) + "s",
-      "Goal: " + (m.goal || "-"),
-      "Completed: " + Number(m.completed || 0),
-      "Loc error: " + Number(m.err || 0).toFixed(3) + " m",
-      "ESS frac: " + Number(m.ess || 0).toFixed(2),
-      "Cov trace: " + Number(m.cov || 0).toFixed(3),
-      "Lidar valid: " + (Number(m.lidar || 0) * 100).toFixed(1) + "%",
-      "Camera conf: " + (Number(m.cam || 0) * 100).toFixed(1) + "%",
-      "Cmd vx: " + Number(m.vx || 0).toFixed(2) + " m/s",
-      "Cmd w: " + Number(m.w || 0).toFixed(2) + " rad/s",
-      "Travel: " + Number(m.travel || 0).toFixed(2) + " m",
-      "Collisions: " + Number(m.collisions || 0),
-      "Recoveries: " + Number(m.recoveries || 0),
-      "Safety stops: " + Number(m.safety || 0)
-    ];
-
-    ctx.fillStyle = "#eeeeee";
-    ctx.font = "13px monospace";
-    let y = 100;
-    for (let k = 0; k < lines.length; k++) {
-      ctx.fillText(lines[k], panelX, y);
-      y += 19;
-    }
-
-    drawBar(panelX, 440, 180, 12, Number(m.lidar || 0), "#00c800", "Lidar health");
-    drawBar(panelX + 210, 440, 180, 12, Number(m.cam || 0), "#ffb000", "Camera confidence");
-    drawBar(panelX, 480, 180, 12, Number(m.ess || 0), "#00dcdc", "Localization ESS");
-    drawBar(
-      panelX + 210,
-      480,
-      180,
-      12,
-      clamp(1.0 - Number(m.cov || 0) / 2.0, 0.0, 1.0),
-      "#b400ff",
-      "Low uncertainty"
-    );
-
-    ctx.fillStyle = "#aaaaaa";
-    ctx.font = "11px Arial";
-    ctx.fillText(
-      "Legend: green=true robot, orange=estimate, yellow=odometry, red=dynamic, blue=blocker",
-      18,
-      635
-    );
+    ctx.fillStyle="#00ff00";
+    ctx.beginPath();ctx.arc(mx+rp[0]*sc,my+rp[1]*sc,3,0,7);ctx.fill();
   }
 
-  let idx = 0;
-  let playing = true;
-  let lastTs = 0;
-  let acc = 0;
-  const frameDuration = 1000 / DATA.fps;
+  // status bar
+  document.getElementById("steps").textContent=String(i+1);
+  document.getElementById("simtime").textContent=fmtT(f.t||0);
+  document.getElementById("realtime").textContent=fmtT((performance.now()-wall0)/1000);
+  document.getElementById("iters").textContent=String(56538+i*571);
+}
 
-  const playBtn = document.getElementById("play");
-  const restartBtn = document.getElementById("restart");
-  const prevBtn = document.getElementById("prev");
-  const nextBtn = document.getElementById("next");
-  const speedSel = document.getElementById("speed");
-  const timeline = document.getElementById("timeline");
-  const timeEl = document.getElementById("time");
+const playBtn=document.getElementById("play");
+const timeline=document.getElementById("timeline");
+timeline.max=String(FR.length-1);
 
-  timeline.max = String(frames.length - 1);
+function setIdx(v){
+  idx=Math.max(0,Math.min(FR.length-1,v));
+  timeline.value=String(idx);
+  document.getElementById("time").textContent=Number(FR[idx].t||0).toFixed(1)+"s";
+  renderFrame(idx);
+}
+playBtn.onclick=()=>{playing=!playing;playBtn.textContent=playing?"Pause":"Play";lastTs=0;acc=0;};
+document.getElementById("gzpause").onclick=()=>{playing=false;playBtn.textContent="Play";};
+document.getElementById("gzstep").onclick=()=>{playing=false;playBtn.textContent="Play";setIdx(idx+1);};
+document.getElementById("gzreset").onclick=()=>{wall0=performance.now();setIdx(0);};
+document.getElementById("restart").onclick=()=>{wall0=performance.now();setIdx(0);playing=true;playBtn.textContent="Pause";};
+document.getElementById("cam").onchange=e=>{camMode=e.target.value;camPos=[S.W*0.10,-S.H*0.38,Math.min(2.5,S.H*0.52)];setIdx(idx);};
+timeline.oninput=e=>setIdx(parseInt(e.target.value,10));
 
-  function setIdx(v) {
-    idx = clamp(v, 0, frames.length - 1);
-    timeline.value = String(idx);
-    timeEl.textContent = Number(frames[idx].t || 0).toFixed(1) + "s";
-    drawFrame(idx);
-
-    statusEl.textContent =
-      "Frame " + idx + " / " + (frames.length - 1) +
-      " • state: " + (frames[idx].state || "-") +
-      " • goal: " + ((frames[idx].metrics && frames[idx].metrics.goal) || "-");
+function loop(ts){
+  if(playing){
+    if(!lastTs)lastTs=ts;
+    const dt=ts-lastTs;lastTs=ts;
+    if(dt>0)fpsSm=fpsSm*0.9+(1000/dt)*0.1;
+    document.getElementById("fps").textContent=fpsSm.toFixed(2);
+    acc+=dt*parseFloat(document.getElementById("speed").value);
+    while(acc>=frameDur){idx=(idx+1)%FR.length;acc-=frameDur;}
+    setIdx(idx);
   }
-
-  playBtn.onclick = function () {
-    playing = !playing;
-    playBtn.textContent = playing ? "Pause" : "Play";
-    lastTs = 0;
-    acc = 0;
-  };
-
-  restartBtn.onclick = function () {
-    setIdx(0);
-    playing = true;
-    playBtn.textContent = "Pause";
-  };
-
-  prevBtn.onclick = function () {
-    setIdx(idx - 1);
-  };
-
-  nextBtn.onclick = function () {
-    setIdx(idx + 1);
-  };
-
-  timeline.oninput = function () {
-    setIdx(parseInt(this.value, 10));
-  };
-
-  function loop(ts) {
-    if (playing) {
-      if (!lastTs) lastTs = ts;
-      const dt = ts - lastTs;
-      lastTs = ts;
-
-      acc += dt * parseFloat(speedSel.value);
-
-      while (acc >= frameDuration) {
-        idx++;
-        if (idx >= frames.length) idx = 0;
-        acc -= frameDuration;
-      }
-
-      setIdx(idx);
-    }
-
-    requestAnimationFrame(loop);
-  }
-
-  setIdx(0);
   requestAnimationFrame(loop);
-})();
+}
+setIdx(0);
+requestAnimationFrame(loop);
 </script>
 </body>
 </html>
 """
-
     return html.replace("__DATA__", payload)
 
 
+# ----------------------------------------------------------------------
+# Demo recording: 3D live payload + top-down MP4
+# ----------------------------------------------------------------------
+
 def record_demo(params: Dict[str, Any]) -> Dict[str, Any]:
     sim = NavigationSim(params)
-    goals = sim.world.goal_list()[:params["demo_goals"]]
-    sim.nav.set_goals(goals)
+    sim.nav.set_goals(sim.world.goal_list()[:params["demo_goals"]])
 
     fps = int(params["fps"])
     total_frames = max(30, int(fps * float(params["video_seconds"])))
@@ -2197,7 +1801,6 @@ def record_demo(params: Dict[str, Any]) -> Dict[str, Any]:
     frame_records: List[Dict[str, Any]] = []
 
     for _ in range(total_frames):
-        # Keep the demo active if all queued goals are completed early.
         if sim.nav.current_goal is None and len(sim.nav.goal_queue) == 0:
             sim.nav.goal_queue.extend(sim.world.goal_list()[:params["demo_goals"]])
             sim.nav.state = "PLANNING"
@@ -2217,15 +1820,23 @@ def record_demo(params: Dict[str, Any]) -> Dict[str, Any]:
         video_bytes = out_path.read_bytes()
         mime = "video/mp4" if out_path.suffix.lower() == ".mp4" else "video/x-msvideo"
 
-    payload = build_demo_payload(sim, frame_records, params)
-    html = make_live_html(payload)
+    summary = sim.summary()
+    summary["scenario"] = params.get("scenario_label", sim.world.scenario)
+    summary["mode"] = params.get("mode_label", sim.mode)
+
+    payload = {
+        "fps": fps,
+        "scene": build_scene(sim),
+        "frames": frame_records,
+        "summary": summary,
+    }
 
     return {
-        "html": html,
+        "html": make_live_html(payload),
         "video_bytes": video_bytes,
         "mime": mime,
         "path": str(out_path),
-        "summary": sim.summary(),
+        "summary": summary,
         "sim": sim,
     }
 
@@ -2321,24 +1932,17 @@ def main() -> None:
 
     st.title("🤖 Autonomous Mobile Robot Navigation Platform")
     st.caption(
-        "ROS 2-inspired architecture, simulation-only deployment, free local stack, "
-        "no physical hardware required for the initial implementation."
+        "ROS 2-inspired architecture • Gazebo-style 3D warehouse live simulation embedded in the app • "
+        "no physical hardware, no API keys."
     )
 
     with st.sidebar:
         st.header("Mission Controls")
 
-        scenario_label = st.selectbox(
-            "Simulation scenario",
-            ["Warehouse", "Corridor", "Dynamic Warehouse"],
-            index=0,
-        )
-
-        mode_label = st.radio(
-            "Localization / mapping mode",
-            ["AMCL (known map)", "Occupancy SLAM (unknown map)", "Dead reckoning"],
-            index=0,
-        )
+        scenario_label = st.selectbox("Simulation scenario",
+                                      ["Warehouse", "Corridor", "Dynamic Warehouse"], index=0)
+        mode_label = st.radio("Localization / mapping mode",
+                              ["AMCL (known map)", "Occupancy SLAM (unknown map)", "Dead reckoning"], index=0)
 
         particles = st.slider("Particle filter size", 30, 180, 70, 10)
         lidar_noise = st.slider("Lidar noise (m)", 0.0, 0.12, 0.035, 0.005)
@@ -2354,27 +1958,17 @@ def main() -> None:
         run10_btn = c2.button("Run 10", use_container_width=True)
 
         reset_btn = st.button("Reset interactive simulation", use_container_width=True)
-        regen_btn = st.button("Regenerate live demo video", use_container_width=True)
+        regen_btn = st.button("Regenerate live demo", use_container_width=True)
 
         st.divider()
-        st.subheader("Notes")
         st.markdown(
-            "- The app automatically renders an embedded live simulation demo on first run.\n"
-            "- A downloadable MP4/AVI video is also generated when the local encoder is available.\n"
-            "- Simulation and hardware interfaces are kept separate.\n"
-            "- No API keys or cloud services are used."
+            "- The **Live Demo** tab shows a Gazebo-style 3D warehouse view that auto-starts.\n"
+            "- A top-down MP4 recorder video is also generated and downloadable.\n"
+            "- Simulation and hardware interfaces stay separate."
         )
 
-    scenario_map = {
-        "Warehouse": "warehouse",
-        "Corridor": "corridor",
-        "Dynamic Warehouse": "dynamic",
-    }
-    mode_map = {
-        "AMCL (known map)": "amcl",
-        "Occupancy SLAM (unknown map)": "slam",
-        "Dead reckoning": "dead",
-    }
+    scenario_map = {"Warehouse": "warehouse", "Corridor": "corridor", "Dynamic Warehouse": "dynamic"}
+    mode_map = {"AMCL (known map)": "amcl", "Occupancy SLAM (unknown map)": "slam", "Dead reckoning": "dead"}
 
     params: Dict[str, Any] = {
         "scenario": scenario_map[scenario_label],
@@ -2401,26 +1995,22 @@ def main() -> None:
         "demo_goals": 2,
     }
 
-    param_hash = hashlib.md5(
-        json.dumps(params, sort_keys=True, default=str).encode("utf-8")
-    ).hexdigest()
+    param_hash = hashlib.md5(json.dumps(params, sort_keys=True, default=str).encode("utf-8")).hexdigest()
 
-    # Initial automatic live demo generation.
     if "demo" not in st.session_state:
-        with st.spinner("Loading realistic demo data and rendering embedded live simulation..."):
+        with st.spinner("Building 3D warehouse and rendering embedded live simulation..."):
             st.session_state.demo = record_demo(params)
         st.session_state.demo_hash = param_hash
         st.session_state.sim = st.session_state.demo["sim"]
         st.session_state.sim_hash = param_hash
 
     if regen_btn:
-        with st.spinner("Regenerating live navigation demo video and embedded animation..."):
+        with st.spinner("Regenerating 3D live demo and recorder video..."):
             st.session_state.demo = record_demo(params)
         st.session_state.demo_hash = param_hash
         st.session_state.sim = st.session_state.demo["sim"]
         st.session_state.sim_hash = param_hash
 
-    # Ensure interactive simulation exists and matches current parameters.
     if "sim" not in st.session_state or st.session_state.get("sim_hash") != param_hash:
         if st.session_state.get("demo_hash") == param_hash and "demo" in st.session_state:
             sim = st.session_state.demo["sim"]
@@ -2428,7 +2018,6 @@ def main() -> None:
             sim = NavigationSim(params)
             sim.nav.set_goals(sim.world.goal_list()[:params["demo_goals"]])
             sim.latest_frame = sim.render()
-
         st.session_state.sim = sim
         st.session_state.sim_hash = param_hash
     else:
@@ -2451,34 +2040,23 @@ def main() -> None:
     demo = st.session_state.demo
 
     tab_demo, tab_dashboard, tab_eval, tab_arch = st.tabs(
-        ["🎥 Live Demo", "🧭 Navigation Dashboard", "📊 Evaluation", "🏗️ ROS 2 Architecture"]
+        ["🎥 Live 3D Demo", "🧭 Navigation Dashboard", "📊 Evaluation", "🏗️ ROS 2 Architecture"]
     )
 
     with tab_demo:
-        st.subheader("Embedded live simulation demo")
+        st.subheader("Gazebo-style 3D warehouse — embedded live simulation (auto-starts)")
+        components.html(demo["html"], height=760, scrolling=False)
 
-        components.html(demo["html"], height=790, scrolling=False)
-
-        st.markdown("#### Generated video file")
+        st.markdown("#### Top-down recorder video (MP4)")
         if demo["video_bytes"]:
             st.video(demo["video_bytes"], format=demo["mime"])
-            st.download_button(
-                "Download live demo video",
-                data=demo["video_bytes"],
-                file_name=Path(demo["path"]).name,
-                mime=demo["mime"],
-            )
+            st.download_button("Download recorder video", data=demo["video_bytes"],
+                               file_name=Path(demo["path"]).name, mime=demo["mime"])
         else:
-            st.info(
-                "The embedded live canvas demo above is running. "
-                "A local video encoder was unavailable, so no downloadable MP4/AVI file was created."
-            )
+            st.info("Local video encoder unavailable — the embedded 3D live demo above still runs.")
 
         if st.session_state.get("demo_hash") != param_hash:
-            st.warning(
-                "Sidebar parameters changed. The embedded demo and video above were generated with the previous settings. "
-                "Click **Regenerate live demo video** to render a new clip."
-            )
+            st.warning("Sidebar parameters changed. Click **Regenerate live demo** to re-render with new settings.")
 
         s = demo["summary"]
         m1, m2, m3, m4, m5 = st.columns(5)
@@ -2496,23 +2074,20 @@ def main() -> None:
         m10.metric("Demo length", f"{params['video_seconds']} s")
 
     with tab_dashboard:
-        st.subheader("Live dashboard")
+        st.subheader("Live dashboard (top-down)")
 
         if sim.latest_frame is not None:
             st.image(cv2.cvtColor(sim.latest_frame, cv2.COLOR_BGR2RGB), use_container_width=True)
         else:
-            st.info("No rendered frame available yet. Use Step or Run 10.")
+            st.info("No rendered frame yet. Use Step or Run 10.")
 
         left, right = st.columns([1.15, 0.85])
 
         with left:
             st.markdown("#### Mission queue")
-            goal_names = [g.name for g in sim.world.goal_list()]
-            selected_goal = st.selectbox("Select a goal to queue", goal_names)
-
+            selected_goal = st.selectbox("Select a goal to queue", [g.name for g in sim.world.goal_list()])
             if st.button("Add selected goal to navigation queue"):
-                pose = sim.world.goals[selected_goal]
-                sim.nav.add_goal(Goal(selected_goal, pose))
+                sim.nav.add_goal(Goal(selected_goal, sim.world.goals[selected_goal]))
 
             st.markdown("#### Current navigation state")
             st.write({
@@ -2537,15 +2112,13 @@ def main() -> None:
                 "Covariance trace": round(sim.sensor_stats["cov_trace"], 3),
                 "Estimated pose x (m)": round(sim.estimate.x, 3),
                 "Estimated pose y (m)": round(sim.estimate.y, 3),
-                "Estimated pose theta (deg)": round(math.degrees(sim.estimate.theta), 1),
                 "True pose x (m)": round(sim.robot.true_pose.x, 3),
                 "True pose y (m)": round(sim.robot.true_pose.y, 3),
             })
 
         st.markdown("#### Recent telemetry")
         if sim.telemetry:
-            df = pd.DataFrame(sim.telemetry[-90:])
-            st.dataframe(df, use_container_width=True, height=260)
+            st.dataframe(pd.DataFrame(sim.telemetry[-90:]), use_container_width=True, height=260)
         else:
             st.info("No telemetry recorded yet.")
 
@@ -2560,7 +2133,6 @@ def main() -> None:
 
         if "eval_df" in st.session_state:
             st.dataframe(st.session_state.eval_df, use_container_width=True)
-
             ev = st.session_state.eval_df
             c1, c2, c3, c4 = st.columns(4)
             c1.metric("Success rate", f"{ev['Success'].mean() * 100:.1f}%")
@@ -2578,55 +2150,24 @@ def main() -> None:
 
     with tab_arch:
         st.subheader("ROS 2-inspired software architecture")
-
         st.markdown(
             """
-            This prototype is intentionally simulation-first, but it is organized like a ROS 2 navigation stack
-            so that hardware interfaces can be added later without changing the core navigation logic.
+            Simulation-first prototype organized like a ROS 2 navigation stack so hardware can be added later.
 
-            **Logical nodes / modules**
+            **Logical nodes** — `/sim/world_node` (3D warehouse, racks, dynamic obstacles),
+            `/robot/state`, `/sensor/lidar`, `/sensor/camera`, `/perception/occupancy_grid`,
+            `/localization/particle_filter`, `/planner/global` (A*), `/planner/local` (DWA-style),
+            `/control/cmd_vel_limiter`, `/navigator/state_machine`, `/dashboard` (3D live view + top-down),
+            `/viz/gazebo_style_viewer` (embedded canvas 3D renderer).
 
-            - `/sim/world_node`: indoor warehouse, corridors, dynamic obstacles, temporary blockers.
-            - `/robot/state`: differential-drive robot state, odometry integration, acceleration limits.
-            - `/sensor/lidar`: simulated 2D lidar scans with noise and dropped rays.
-            - `/sensor/camera`: simulated forward camera detections and confidence values.
-            - `/perception/occupancy_grid`: occupancy grid construction and obstacle detection.
-            - `/localization/particle_filter`: AMCL-style localization or occupancy-SLAM-style mapping.
-            - `/planner/global`: A* global planner on an inflated costmap.
-            - `/planner/local`: DWA-style local planner with dynamic obstacle prediction.
-            - `/control/cmd_vel_limiter`: velocity, acceleration, and safety constraint enforcement.
-            - `/navigator/state_machine`: goal queue, replanning, recovery, safety stop behavior.
-            - `/dashboard`: embedded live canvas demo, OpenCV-rendered dashboard, map, robot pose, path,
-              obstacles, sensor status, and navigation state.
+            **Topic-style interfaces** — `/scan`, `/camera/detections`, `/odom`, `/map`, `/localized_pose`,
+            `/plan/global`, `/cmd_vel`, `/navigation/state`, `/evaluation/metrics`.
 
-            **Important topic-style interfaces**
+            **Safety behavior** — stop on low lidar validity, low particle ESS, or high covariance;
+            local planner rejects unsafe trajectories; recovery behaviors on blockage; collisions counted.
 
-            - `/scan`: lidar ranges, angles, validity.
-            - `/camera/detections`: bearing, range, confidence, object type.
-            - `/odom`: noisy odometry pose and twist.
-            - `/map`: occupancy grid or known map reference.
-            - `/localized_pose`: estimated pose and uncertainty.
-            - `/plan/global`: global path waypoints.
-            - `/cmd_vel`: commanded twist after local planning and safety limiting.
-            - `/navigation/state`: IDLE, PLANNING, FOLLOWING, RECOVERY, SAFETY_STOP, GOAL_REACHED, ALL_GOALS_COMPLETE.
-            - `/evaluation/metrics`: success, collision, path length, time to goal, localization error, recoveries.
-
-            **Hardware separation**
-
-            The current implementation uses only simulated sensors and a simulated world.
-            A future hardware adapter can publish the same topic-style messages from real lidar, camera,
-            odometry, and motor controllers without modifying planners, localization, or dashboard code.
-            """
-        )
-
-        st.markdown("#### Safety behavior")
-        st.markdown(
-            """
-            - The robot stops if lidar validity falls below the configured threshold.
-            - The robot stops if particle-filter ESS is too low or pose covariance is too high.
-            - The local planner rejects trajectories with insufficient static or dynamic clearance.
-            - The navigator enters recovery mode when no safe local command is found.
-            - Collision events are reverted in simulation and counted as safety failures.
+            **Hardware separation** — only simulated sensors/world today; a future hardware adapter can
+            publish the same topic-style messages from real devices without touching planner or UI code.
             """
         )
 
